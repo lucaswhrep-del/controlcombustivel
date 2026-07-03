@@ -1,0 +1,1701 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Controle de Combustivel - Supervisores</title>
+  <style>
+    :root {
+      --bg: #f3f6f5;
+      --panel: #fff;
+      --ink: #182320;
+      --muted: #62716d;
+      --line: #d9e4e0;
+      --brand: #126b5f;
+      --brand-dark: #0a4e46;
+      --accent: #b86b16;
+      --danger: #b42318;
+      --ok: #147a3d;
+      --warn: #8a4d05;
+      --shadow: 0 10px 30px rgba(21, 37, 34, 0.08);
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); }
+    h1, h2, h3, p { margin: 0; }
+
+    header {
+      background: #102824;
+      color: #fff;
+      padding: 20px clamp(14px, 4vw, 42px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    h1 { font-size: clamp(1.35rem, 3vw, 2rem); font-weight: 850; letter-spacing: 0; }
+    header p { color: #c9d9d5; margin-top: 5px; line-height: 1.45; max-width: 740px; }
+
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand-logo {
+      width: 58px;
+      height: 58px;
+      border-radius: 8px;
+      object-fit: contain;
+      background: #fff;
+      border: 1px solid rgba(255,255,255,0.28);
+      padding: 5px;
+      flex: 0 0 auto;
+    }
+
+    .login-logo {
+      width: 74px;
+      height: 74px;
+      border-radius: 8px;
+      object-fit: contain;
+      background: #fff;
+      border: 1px solid rgba(255,255,255,0.28);
+      padding: 6px;
+      margin-bottom: 12px;
+    }
+
+    .logo-preview {
+      width: 110px;
+      height: 76px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      object-fit: contain;
+      background: #f7faf9;
+      padding: 6px;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 28px));
+      margin: 22px auto 48px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .login-wrap {
+      min-height: calc(100vh - 44px);
+      display: grid;
+      place-items: center;
+      padding: 22px;
+    }
+
+    .login-card {
+      width: min(430px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .login-card .panel-head { background: #102824; color: #fff; border-bottom: 0; }
+    .login-card .panel-head span { color: #c9d9d5; }
+
+    .top-actions, .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .tabs {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 5px;
+      display: flex;
+      gap: 4px;
+      box-shadow: var(--shadow);
+      width: fit-content;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      min-height: 40px;
+      padding: 10px 13px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .tab.active { background: var(--brand); color: #fff; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 390px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel, .kpi {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 17px 18px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .panel-head h2 { font-size: 1.05rem; line-height: 1.25; }
+    .panel-head span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; line-height: 1.35; }
+    form, .panel-body { padding: 18px; }
+
+    label {
+      display: block;
+      color: #2b3835;
+      font-size: 0.86rem;
+      font-weight: 780;
+      margin-bottom: 7px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #cbd7d4;
+      border-radius: 7px;
+      padding: 11px 12px;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+      min-height: 42px;
+    }
+
+    input[readonly], input:disabled, select:disabled {
+      background: #eef3f1;
+      color: #596864;
+    }
+
+    textarea { resize: vertical; min-height: 82px; }
+    input:focus, select:focus, textarea:focus { outline: 3px solid rgba(18, 107, 95, 0.16); border-color: var(--brand); }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field { margin-bottom: 14px; }
+    .full { grid-column: 1 / -1; }
+
+    button, .action-link {
+      border: 1px solid transparent;
+      border-radius: 7px;
+      min-height: 42px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 850;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .primary { background: var(--brand); color: #fff; }
+    .primary:hover { background: var(--brand-dark); }
+    .secondary { background: #eef5f3; color: var(--brand-dark); border-color: #cfe0dc; }
+    .danger { background: #fff2f0; color: var(--danger); border-color: #ffd4ce; }
+    .ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,0.35); }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 12px; }
+    .kpi { padding: 16px; }
+    .kpi strong { display: block; font-size: clamp(1.25rem, 3vw, 1.8rem); line-height: 1.15; }
+    .kpi span { display: block; color: var(--muted); margin-top: 4px; font-size: 0.88rem; }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      align-items: end;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfdfc;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 13px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-size: 0.92rem; }
+    th { color: #41504d; background: #f7faf9; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0; }
+    tbody tr:hover { background: #fbf6ef; }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 0.78rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .status.pending { background: #fff3df; color: var(--warn); }
+    .status.approved { background: #e8f1ff; color: #175cd3; }
+    .status.paid { background: #eaf7ee; color: var(--ok); }
+
+    .money { font-weight: 850; color: var(--brand-dark); white-space: nowrap; }
+    .photos { display: flex; gap: 8px; flex-wrap: wrap; }
+    .thumb { width: 58px; height: 58px; border-radius: 6px; object-fit: cover; border: 1px solid var(--line); background: #edf3f1; cursor: pointer; }
+    .photo-removed {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      border-radius: 7px;
+      background: #eef3f1;
+      color: var(--muted);
+      padding: 8px 10px;
+      font-size: 0.82rem;
+      font-weight: 750;
+    }
+    .empty { padding: 32px 18px; color: var(--muted); text-align: center; }
+    .hidden { display: none !important; }
+
+    .notice {
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: #fff8ec;
+      border: 1px solid #f2d7a7;
+      color: #68430a;
+      line-height: 1.4;
+      font-size: 0.92rem;
+    }
+
+    .notice.ok {
+      background: #eaf7ee;
+      border-color: #bddfc8;
+      color: #147a3d;
+    }
+
+    .notice.error {
+      background: #fff2f0;
+      border-color: #ffd4ce;
+      color: #b42318;
+    }
+
+    .muted { color: var(--muted); font-size: 0.88rem; line-height: 1.35; }
+    .list { display: grid; gap: 10px; }
+    .logo-tools { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .export-help { margin-top: 10px; }
+
+    .person {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .person strong { display: block; font-size: 0.96rem; }
+    .person span { color: var(--muted); font-size: 0.84rem; }
+
+    dialog {
+      width: min(900px, calc(100% - 24px));
+      border: 0;
+      border-radius: 8px;
+      padding: 0;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.32);
+    }
+
+    dialog::backdrop { background: rgba(9, 25, 22, 0.66); }
+    .modal-head { padding: 13px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 16px; }
+    .modal-body img { width: 100%; max-height: 72vh; object-fit: contain; background: #101817; border-radius: 6px; }
+
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+      .filters { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      header { padding: 18px 14px; }
+      .brand-logo { width: 48px; height: 48px; }
+      main { width: min(100% - 20px, 1180px); }
+      .tabs { width: 100%; }
+      .tab { flex: 1; padding-inline: 8px; }
+      .grid, .filters, .kpis { grid-template-columns: 1fr; }
+      .table-wrap { overflow-x: auto; }
+      table { min-width: 920px; }
+    }
+  </style>
+</head>
+<body>
+  <section id="loginScreen" class="login-wrap">
+    <article class="login-card">
+      <div class="panel-head">
+        <div>
+          <img id="loginLogo" class="login-logo hidden" alt="Logo da empresa">
+          <h2>Controle de Combustivel</h2>
+          <span>Acesse com seu perfil para registrar, aprovar ou pagar os reembolsos.</span>
+        </div>
+      </div>
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginUser">Usuario</label>
+          <input id="loginUser" autocomplete="username" required placeholder="admin, financeiro ou supervisor">
+        </div>
+        <div class="field">
+          <label for="loginPass">Senha</label>
+          <input id="loginPass" type="password" autocomplete="current-password" required placeholder="Digite a senha">
+        </div>
+        <div class="notice">
+          Teste rapido: admin/admin123, financeiro/fin123, supervisor/sup123.
+        </div>
+        <div class="notice" id="firebaseStatus">
+          Firebase: verificando configuracao...
+        </div>
+        <div class="button-row">
+          <button class="primary" type="submit" disabled>Entrar</button>
+        </div>
+      </form>
+    </article>
+  </section>
+
+  <section id="appScreen" class="hidden">
+    <header>
+      <div class="brand-block">
+        <img id="headerLogo" class="brand-logo hidden" alt="Logo da empresa">
+        <div>
+          <h1 id="appTitle">Controle de Combustivel</h1>
+          <p id="userContext">Registro diario, aprovacao mensal e pagamento por perfil de acesso.</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="ghost" id="exportCsvBtn" type="button">Exportar CSV</button>
+        <button class="ghost" id="backupBtn" type="button">Baixar backup</button>
+        <button class="ghost" id="logoutBtn" type="button">Sair</button>
+      </div>
+    </header>
+
+    <main>
+      <div id="tabs" class="tabs" role="tablist" aria-label="Telas do sistema"></div>
+
+      <section id="registro" class="screen hidden">
+        <div class="layout">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Novo registro diario</h2>
+                <span>O supervisor registra apenas sua propria quilometragem e fotos do dia.</span>
+              </div>
+            </div>
+            <form id="tripForm">
+              <div class="field">
+                <label for="supervisorSelect">Supervisor</label>
+                <select id="supervisorSelect" required></select>
+              </div>
+              <div class="grid">
+                <div class="field">
+                  <label for="tripDate">Data</label>
+                  <input id="tripDate" type="date" required>
+                </div>
+                <div class="field">
+                  <label for="rate">Valor por km</label>
+                  <input id="rate" type="number" min="0" step="0.01" readonly required>
+                </div>
+                <div class="field">
+                  <label for="kmStart">Km inicial</label>
+                  <input id="kmStart" type="number" min="0" step="1" required>
+                </div>
+                <div class="field">
+                  <label for="kmEnd">Km final</label>
+                  <input id="kmEnd" type="number" min="0" step="1" required>
+                </div>
+                <div class="field">
+                  <label for="photoStart">Foto inicial</label>
+                  <input id="photoStart" type="file" accept="image/*" capture="environment" required>
+                </div>
+                <div class="field">
+                  <label for="photoEnd">Foto final</label>
+                  <input id="photoEnd" type="file" accept="image/*" capture="environment" required>
+                </div>
+                <div class="field full">
+                  <label for="notes">Observacoes</label>
+                  <textarea id="notes" placeholder="Ex.: visita fora da rota, manutencao, ajuste autorizado"></textarea>
+                </div>
+              </div>
+              <div class="notice" id="calcPreview">Preencha os campos para calcular.</div>
+              <div class="button-row">
+                <button class="primary" type="submit">Salvar registro</button>
+                <button class="secondary" id="clearFormBtn" type="button">Limpar</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Meus registros recentes</h2>
+                <span>Registros lancados e aguardando aprovacao do administrador.</span>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Supervisor</th>
+                    <th>Km</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="recentRows"></tbody>
+              </table>
+            </div>
+            <div id="recentEmpty" class="empty hidden">Nenhum registro lancado ainda.</div>
+          </article>
+        </div>
+      </section>
+
+      <section id="controle" class="screen hidden">
+        <div class="kpis">
+          <div class="kpi"><strong id="kpiKm">0 km</strong><span>Total rodado</span></div>
+          <div class="kpi"><strong id="kpiAmount">R$ 0,00</strong><span>Total calculado</span></div>
+          <div class="kpi"><strong id="kpiPending">R$ 0,00</strong><span>Aguardando aprovacao</span></div>
+          <div class="kpi"><strong id="kpiPaid">R$ 0,00</strong><span>Pago</span></div>
+        </div>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Conferencia diaria</h2>
+              <span>O admin confere fotos e quilometragem antes da liberacao mensal para o financeiro.</span>
+            </div>
+          </div>
+          <div class="filters">
+            <div>
+              <label for="filterSupervisor">Supervisor</label>
+              <select id="filterSupervisor"></select>
+            </div>
+            <div>
+              <label for="filterStatus">Status</label>
+              <select id="filterStatus">
+                <option value="all">Todos</option>
+                <option value="pending">Aguardando aprovacao</option>
+                <option value="approved">Aprovado</option>
+                <option value="paid">Pago</option>
+              </select>
+            </div>
+            <div>
+              <label for="filterMonth">Mes</label>
+              <input id="filterMonth" type="month">
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Supervisor</th>
+                  <th>Km inicial/final</th>
+                  <th>Rodado</th>
+                  <th>Valor</th>
+                  <th>Fotos</th>
+                  <th>Status</th>
+                  <th>Acoes</th>
+                </tr>
+              </thead>
+              <tbody id="controlRows"></tbody>
+            </table>
+          </div>
+          <div id="controlEmpty" class="empty hidden">Nenhum registro encontrado para os filtros atuais.</div>
+        </article>
+      </section>
+
+      <section id="extratos" class="screen hidden">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Extrato mensal para pagamento</h2>
+              <span>Consolide o mes por supervisor. O financeiro paga apenas registros aprovados pelo admin.</span>
+            </div>
+          </div>
+          <div class="filters">
+            <div>
+              <label for="statementSupervisor">Supervisor</label>
+              <select id="statementSupervisor"></select>
+            </div>
+            <div>
+              <label for="statementMonth">Mes de referencia</label>
+              <input id="statementMonth" type="month">
+            </div>
+            <div class="button-row">
+              <button class="primary" id="approveMonthBtn" type="button">Aprovar mes</button>
+              <a class="secondary action-link" id="exportStatementBtn" href="#" download>Exportar extrato</a>
+              <a class="secondary action-link" id="openStatementBtn" href="#" target="_blank" rel="noopener">Abrir extrato</a>
+            </div>
+            <div class="muted export-help">
+              Se o navegador bloquear o download, use Abrir extrato e salve como PDF pela impressao.
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="kpis">
+              <div class="kpi"><strong id="statementKm">0 km</strong><span>Km aprovados</span></div>
+              <div class="kpi"><strong id="statementAmount">R$ 0,00</strong><span>Valor do extrato</span></div>
+              <div class="kpi"><strong id="statementPending">0</strong><span>Dias aguardando admin</span></div>
+              <div class="kpi"><strong id="statementPaid">R$ 0,00</strong><span>Pago no mes</span></div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Km inicial/final</th>
+                  <th>Rodado</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                  <th>Observacoes</th>
+                </tr>
+              </thead>
+              <tbody id="statementRows"></tbody>
+            </table>
+          </div>
+          <div id="statementEmpty" class="empty hidden">Nenhum registro para este extrato.</div>
+          <div class="panel-body button-row" id="financeActions">
+            <button class="primary" id="markMonthPaidBtn" type="button">Marcar extrato como pago</button>
+          </div>
+        </article>
+      </section>
+
+      <section id="supervisores" class="screen hidden">
+        <div class="layout">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Cadastrar supervisor</h2>
+                <span>O admin cria o supervisor e define o usuario de login.</span>
+              </div>
+            </div>
+            <form id="supervisorForm">
+              <div class="field">
+                <label for="supervisorName">Nome</label>
+                <input id="supervisorName" required maxlength="80" placeholder="Ex.: Ana Souza">
+              </div>
+              <div class="field">
+                <label for="vehiclePlate">Placa ou veiculo</label>
+                <input id="vehiclePlate" maxlength="40" placeholder="Ex.: ABC1D23 - Strada">
+              </div>
+              <div class="grid">
+                <div class="field">
+                  <label for="newUser">Usuario</label>
+                  <input id="newUser" required maxlength="40" placeholder="ana">
+                </div>
+                <div class="field">
+                  <label for="newPass">Senha</label>
+                  <input id="newPass" required maxlength="40" placeholder="Senha inicial">
+                </div>
+              </div>
+              <div class="button-row">
+                <button class="primary" type="submit">Adicionar</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Equipe cadastrada</h2>
+                <span>Supervisores disponiveis para lancamentos.</span>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div id="supervisorList" class="list"></div>
+              <div id="supervisorEmpty" class="empty hidden">Cadastre o primeiro supervisor para iniciar.</div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="ajustes" class="screen hidden">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Ajustes administrativos</h2>
+              <span>Somente o admin altera o valor por km e dados de acesso.</span>
+            </div>
+          </div>
+          <form id="settingsForm">
+            <div class="grid">
+              <div class="field">
+                <label for="defaultRate">Valor padrao por km</label>
+                <input id="defaultRate" type="number" min="0" step="0.01" required>
+              </div>
+              <div class="field">
+                <label for="companyName">Empresa</label>
+                <input id="companyName" maxlength="80" required>
+              </div>
+              <div class="field full">
+                <label for="companyLogo">Logo da empresa</label>
+                <div class="logo-tools">
+                  <img id="logoPreview" class="logo-preview hidden" alt="Previa da logo">
+                  <input id="companyLogo" type="file" accept="image/*">
+                  <button class="secondary" id="removeLogoBtn" type="button">Remover logo</button>
+                </div>
+              </div>
+            </div>
+            <div class="notice">Alterar o valor por km afeta apenas novos registros. Registros antigos preservam o valor usado no dia.</div>
+            <div class="button-row">
+              <button class="primary" type="submit">Salvar ajustes</button>
+            </div>
+          </form>
+        </article>
+      </section>
+    </main>
+  </section>
+
+  <dialog id="photoDialog">
+    <div class="modal-head">
+      <strong id="photoTitle">Foto</strong>
+      <button class="secondary" type="button" id="closePhotoBtn">Fechar</button>
+    </div>
+    <div class="modal-body">
+      <img id="photoPreview" alt="Foto da quilometragem">
+    </div>
+  </dialog>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+  <script>
+    const SESSION_KEY = "fuelSupervisorControl.session";
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAaVIyNkdtwt01_a_2vD9rpxS7TtboQMVU",
+      authDomain: "control-combustivel.firebaseapp.com",
+      projectId: "control-combustivel",
+      storageBucket: "control-combustivel.firebasestorage.app",
+      messagingSenderId: "824813607948",
+      appId: "1:824813607948:web:e51aeb42ffdc31777e6229"
+    };
+
+    let firebaseReady = false;
+    let db = null;
+    let storage = null;
+    let cloudSaveTimer = null;
+
+    function hasFirebaseConfig() {
+      return FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.includes("COLE_AQUI");
+    }
+
+    function setFirebaseStatus(message, kind = "") {
+      if (!el?.firebaseStatus) return;
+      el.firebaseStatus.textContent = `Firebase: ${message}`;
+      el.firebaseStatus.classList.toggle("ok", kind === "ok");
+      el.firebaseStatus.classList.toggle("error", kind === "error");
+    }
+
+    function freshData() {
+      const supervisorId = crypto.randomUUID();
+      return {
+        settings: { defaultRate: 1.20, companyName: "Minha empresa", logoData: "" },
+        supervisors: [
+          { id: supervisorId, name: "Supervisor exemplo", vehicle: "Veiculo exemplo" }
+        ],
+        users: [
+          { id: crypto.randomUUID(), username: "admin", password: "admin123", role: "admin", name: "Administrador" },
+          { id: crypto.randomUUID(), username: "financeiro", password: "fin123", role: "financeiro", name: "Financeiro" },
+          { id: crypto.randomUUID(), username: "supervisor", password: "sup123", role: "supervisor", name: "Supervisor exemplo", supervisorId }
+        ],
+        trips: []
+      };
+    }
+
+    let state = freshData();
+    let currentUser = loadSession();
+    let statementBlobUrl = "";
+
+    const el = {
+      loginScreen: document.querySelector("#loginScreen"),
+      appScreen: document.querySelector("#appScreen"),
+      loginForm: document.querySelector("#loginForm"),
+      loginUser: document.querySelector("#loginUser"),
+      loginPass: document.querySelector("#loginPass"),
+      loginLogo: document.querySelector("#loginLogo"),
+      firebaseStatus: document.querySelector("#firebaseStatus"),
+      userContext: document.querySelector("#userContext"),
+      appTitle: document.querySelector("#appTitle"),
+      headerLogo: document.querySelector("#headerLogo"),
+      tabs: document.querySelector("#tabs"),
+      screens: document.querySelectorAll(".screen"),
+      logoutBtn: document.querySelector("#logoutBtn"),
+      tripForm: document.querySelector("#tripForm"),
+      supervisorSelect: document.querySelector("#supervisorSelect"),
+      tripDate: document.querySelector("#tripDate"),
+      rate: document.querySelector("#rate"),
+      kmStart: document.querySelector("#kmStart"),
+      kmEnd: document.querySelector("#kmEnd"),
+      photoStart: document.querySelector("#photoStart"),
+      photoEnd: document.querySelector("#photoEnd"),
+      notes: document.querySelector("#notes"),
+      calcPreview: document.querySelector("#calcPreview"),
+      recentRows: document.querySelector("#recentRows"),
+      recentEmpty: document.querySelector("#recentEmpty"),
+      filterSupervisor: document.querySelector("#filterSupervisor"),
+      filterStatus: document.querySelector("#filterStatus"),
+      filterMonth: document.querySelector("#filterMonth"),
+      controlRows: document.querySelector("#controlRows"),
+      controlEmpty: document.querySelector("#controlEmpty"),
+      kpiKm: document.querySelector("#kpiKm"),
+      kpiAmount: document.querySelector("#kpiAmount"),
+      kpiPending: document.querySelector("#kpiPending"),
+      kpiPaid: document.querySelector("#kpiPaid"),
+      statementSupervisor: document.querySelector("#statementSupervisor"),
+      statementMonth: document.querySelector("#statementMonth"),
+      statementRows: document.querySelector("#statementRows"),
+      statementEmpty: document.querySelector("#statementEmpty"),
+      openStatementBtn: document.querySelector("#openStatementBtn"),
+      statementKm: document.querySelector("#statementKm"),
+      statementAmount: document.querySelector("#statementAmount"),
+      statementPending: document.querySelector("#statementPending"),
+      statementPaid: document.querySelector("#statementPaid"),
+      approveMonthBtn: document.querySelector("#approveMonthBtn"),
+      exportStatementBtn: document.querySelector("#exportStatementBtn"),
+      markMonthPaidBtn: document.querySelector("#markMonthPaidBtn"),
+      financeActions: document.querySelector("#financeActions"),
+      supervisorForm: document.querySelector("#supervisorForm"),
+      supervisorName: document.querySelector("#supervisorName"),
+      vehiclePlate: document.querySelector("#vehiclePlate"),
+      newUser: document.querySelector("#newUser"),
+      newPass: document.querySelector("#newPass"),
+      supervisorList: document.querySelector("#supervisorList"),
+      supervisorEmpty: document.querySelector("#supervisorEmpty"),
+      settingsForm: document.querySelector("#settingsForm"),
+      defaultRate: document.querySelector("#defaultRate"),
+      companyName: document.querySelector("#companyName"),
+      companyLogo: document.querySelector("#companyLogo"),
+      logoPreview: document.querySelector("#logoPreview"),
+      removeLogoBtn: document.querySelector("#removeLogoBtn"),
+      exportCsvBtn: document.querySelector("#exportCsvBtn"),
+      backupBtn: document.querySelector("#backupBtn"),
+      clearFormBtn: document.querySelector("#clearFormBtn"),
+      photoDialog: document.querySelector("#photoDialog"),
+      photoPreview: document.querySelector("#photoPreview"),
+      photoTitle: document.querySelector("#photoTitle"),
+      closePhotoBtn: document.querySelector("#closePhotoBtn")
+    };
+
+    const roleTabs = {
+      admin: [
+        { id: "controle", label: "Conferencia" },
+        { id: "extratos", label: "Extratos" },
+        { id: "supervisores", label: "Supervisores" },
+        { id: "ajustes", label: "Ajustes" }
+      ],
+      financeiro: [
+        { id: "extratos", label: "Pagamentos" },
+        { id: "controle", label: "Consulta" }
+      ],
+      supervisor: [
+        { id: "registro", label: "Registro diario" },
+        { id: "extratos", label: "Meus extratos" }
+      ]
+    };
+
+    function saveState() {
+      if (!firebaseReady) {
+        alert("Firebase nao conectado. Os dados nao foram salvos. Recarregue e aguarde a conexao antes de continuar.");
+        setSession(null);
+        return;
+      }
+      queueCloudSave();
+    }
+
+    async function initFirebase() {
+      if (!hasFirebaseConfig()) {
+        setFirebaseStatus("bloqueado. Configure o firebaseConfig para usar o sistema.", "error");
+        return false;
+      }
+      if (!window.firebase) {
+        setFirebaseStatus("scripts nao carregaram. Verifique internet, bloqueadores ou publicacao.", "error");
+        alert("Firebase nao carregou. Verifique a internet ou publique em um dominio com acesso aos scripts do Firebase.");
+        return false;
+      }
+
+      try {
+        setFirebaseStatus("conectando ao projeto control-combustivel...");
+        if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+        db = firebase.firestore();
+        storage = firebase.storage();
+        await firebase.auth().signInAnonymously();
+        firebaseReady = true;
+        await loadCloudState();
+        listenCloudState();
+        setFirebaseStatus("conectado. Firestore/Auth funcionando.", "ok");
+        return true;
+      } catch (error) {
+        console.error(error);
+        setFirebaseStatus(`${error.code || "erro"} - ${error.message || "falha ao conectar"}`, "error");
+        alert("Nao foi possivel conectar ao Firebase. O uso foi bloqueado para evitar perda de informacoes.");
+        return false;
+      }
+    }
+
+    function appDocRef() {
+      return db.collection("fuelControl").doc("main");
+    }
+
+    async function loadCloudState() {
+      const snap = await appDocRef().get();
+      if (snap.exists && snap.data()?.state) {
+        state = normalizeState(snap.data().state);
+      } else {
+        await saveCloudNow();
+      }
+      currentUser = loadSession();
+    }
+
+    function listenCloudState() {
+      appDocRef().onSnapshot((snap) => {
+        if (!snap.exists || !snap.data()?.state) return;
+        state = normalizeState(snap.data().state);
+        currentUser = loadSession();
+        renderAppShell();
+      });
+    }
+
+    function queueCloudSave() {
+      if (!firebaseReady) return;
+      clearTimeout(cloudSaveTimer);
+      cloudSaveTimer = setTimeout(() => {
+        saveCloudNow().catch((error) => {
+          console.error(error);
+          setFirebaseStatus(`${error.code || "erro"} - falha ao salvar no Firebase`, "error");
+          alert("Falha ao salvar no Firebase. Verifique a conexao antes de continuar.");
+        });
+      }, 450);
+    }
+
+    async function saveCloudNow() {
+      if (!firebaseReady) return;
+      await appDocRef().set({
+        state,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    }
+
+    function normalizeState(value) {
+      return {
+        settings: { defaultRate: 1.20, companyName: "Minha empresa", logoData: "", ...(value.settings || {}) },
+        supervisors: Array.isArray(value.supervisors) ? value.supervisors : [],
+        users: Array.isArray(value.users) ? value.users : [],
+        trips: Array.isArray(value.trips) ? value.trips : []
+      };
+    }
+
+    function loadSession() {
+      const userId = localStorage.getItem(SESSION_KEY);
+      return state.users.find((user) => user.id === userId) || null;
+    }
+
+    function setSession(user) {
+      currentUser = user;
+      if (user) localStorage.setItem(SESSION_KEY, user.id);
+      else localStorage.removeItem(SESSION_KEY);
+      renderAppShell();
+    }
+
+    function money(value) {
+      return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    function number(value) {
+      return Number(value || 0).toLocaleString("pt-BR");
+    }
+
+    function formatDate(value) {
+      if (!value) return "";
+      const [year, month, day] = value.split("-");
+      return `${day}/${month}/${year}`;
+    }
+
+    function monthLabel(value) {
+      if (!value) return "";
+      const [year, month] = value.split("-");
+      return `${month}/${year}`;
+    }
+
+    function safeFilename(value) {
+      return String(value || "arquivo")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9._-]+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "")
+        .toLowerCase();
+    }
+
+    function monthNow() {
+      return new Date().toISOString().slice(0, 7);
+    }
+
+    function tripMonth(trip) {
+      return trip.date.slice(0, 7);
+    }
+
+    function getSupervisor(id) {
+      return state.supervisors.find((item) => item.id === id);
+    }
+
+    function supervisorTripsOnly(trips) {
+      if (currentUser?.role !== "supervisor") return trips;
+      return trips.filter((trip) => trip.supervisorId === currentUser.supervisorId);
+    }
+
+    function allowedSupervisors() {
+      if (currentUser?.role === "supervisor") {
+        return state.supervisors.filter((item) => item.id === currentUser.supervisorId);
+      }
+      return [...state.supervisors];
+    }
+
+    function filteredTrips() {
+      const supervisor = el.filterSupervisor.value;
+      const status = el.filterStatus.value;
+      const month = el.filterMonth.value;
+
+      return supervisorTripsOnly(state.trips)
+        .filter((trip) => supervisor === "all" || trip.supervisorId === supervisor)
+        .filter((trip) => status === "all" || trip.status === status)
+        .filter((trip) => !month || tripMonth(trip) === month)
+        .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+    }
+
+    function currentStatementTrips() {
+      const supervisorId = el.statementSupervisor.value;
+      const month = el.statementMonth.value;
+      return supervisorTripsOnly(state.trips)
+        .filter((trip) => trip.supervisorId === supervisorId)
+        .filter((trip) => tripMonth(trip) === month)
+        .sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    function statusBadge(status) {
+      const labels = {
+        pending: "Aguardando aprovacao",
+        approved: "Aprovado",
+        paid: "Pago"
+      };
+      return `<span class="status ${status}">${labels[status] || status}</span>`;
+    }
+
+    function tripPhotosHtml(trip) {
+      const start = trip.photoStartUrl || trip.photoStart;
+      const end = trip.photoEndUrl || trip.photoEnd;
+      if (!start || !end) {
+        return `<span class="photo-removed">Fotos removidas apos pagamento</span>`;
+      }
+      return `
+        <div class="photos">
+          <img class="thumb" src="${start}" alt="Foto inicial" data-photo="${trip.id}" data-kind="start">
+          <img class="thumb" src="${end}" alt="Foto final" data-photo="${trip.id}" data-kind="end">
+        </div>
+      `;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function csvEscape(value) {
+      return `"${String(value ?? "").replaceAll('"', '""')}"`;
+    }
+
+    function renderAppShell() {
+      if (!firebaseReady) {
+        currentUser = null;
+        el.loginScreen.classList.remove("hidden");
+        el.appScreen.classList.add("hidden");
+        el.loginForm.querySelector("button[type='submit']").disabled = true;
+        renderLogo();
+        return;
+      }
+
+      el.loginForm.querySelector("button[type='submit']").disabled = false;
+      el.loginScreen.classList.toggle("hidden", Boolean(currentUser));
+      el.appScreen.classList.toggle("hidden", !currentUser);
+      renderLogo();
+      if (!currentUser) return;
+
+      const roleName = { admin: "Administrador", financeiro: "Financeiro", supervisor: "Supervisor" }[currentUser.role];
+      el.userContext.textContent = `${currentUser.name} - perfil ${roleName}`;
+      el.appTitle.textContent = state.settings.companyName || "Controle de Combustivel";
+      el.tabs.innerHTML = roleTabs[currentUser.role].map((tab, index) => (
+        `<button class="tab ${index === 0 ? "active" : ""}" type="button" data-tab="${tab.id}">${tab.label}</button>`
+      )).join("");
+
+      el.tabs.querySelectorAll(".tab").forEach((tab) => {
+        tab.addEventListener("click", () => switchTab(tab.dataset.tab));
+      });
+
+      el.filterMonth.value ||= monthNow();
+      el.statementMonth.value ||= monthNow();
+      el.tripDate.valueAsDate = new Date();
+      el.rate.value = Number(state.settings.defaultRate).toFixed(2);
+      el.defaultRate.value = Number(state.settings.defaultRate).toFixed(2);
+      el.companyName.value = state.settings.companyName;
+
+      switchTab(roleTabs[currentUser.role][0].id);
+      renderAll();
+    }
+
+    function switchTab(id) {
+      el.tabs.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === id));
+      el.screens.forEach((screen) => screen.classList.toggle("hidden", screen.id !== id));
+    }
+
+    function renderLogo() {
+      const logo = state.settings.logoUrl || state.settings.logoData;
+      [el.loginLogo, el.headerLogo, el.logoPreview].forEach((img) => {
+        img.src = logo || "";
+        img.classList.toggle("hidden", !logo);
+      });
+      el.removeLogoBtn.classList.toggle("hidden", !logo);
+    }
+
+    function renderSupervisorOptions() {
+      const options = allowedSupervisors()
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((supervisor) => `<option value="${supervisor.id}">${escapeHtml(supervisor.name)}</option>`)
+        .join("");
+      const allOption = currentUser.role === "supervisor" ? "" : `<option value="all">Todos</option>`;
+
+      el.supervisorSelect.innerHTML = options;
+      el.supervisorSelect.disabled = currentUser.role === "supervisor";
+      el.filterSupervisor.innerHTML = `${allOption}${options}`;
+      el.statementSupervisor.innerHTML = options;
+
+      if (currentUser.role === "supervisor") {
+        el.supervisorSelect.value = currentUser.supervisorId;
+        el.filterSupervisor.value = currentUser.supervisorId;
+        el.statementSupervisor.value = currentUser.supervisorId;
+      }
+    }
+
+    function renderRecent() {
+      const rows = supervisorTripsOnly([...state.trips])
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, 8);
+
+      el.recentRows.innerHTML = rows.map((trip) => {
+        const supervisor = getSupervisor(trip.supervisorId);
+        return `
+          <tr>
+            <td>${formatDate(trip.date)}</td>
+            <td>${escapeHtml(supervisor?.name || "Supervisor removido")}</td>
+            <td>${number(trip.distanceKm)} km</td>
+            <td class="money">${money(trip.amount)}</td>
+            <td>${statusBadge(trip.status)}</td>
+          </tr>
+        `;
+      }).join("");
+
+      el.recentEmpty.classList.toggle("hidden", rows.length > 0);
+    }
+
+    function renderControl() {
+      const rows = filteredTrips();
+      const totals = rows.reduce((acc, trip) => {
+        acc.km += trip.distanceKm;
+        acc.amount += trip.amount;
+        if (trip.status === "pending") acc.pending += trip.amount;
+        if (trip.status === "paid") acc.paid += trip.amount;
+        return acc;
+      }, { km: 0, amount: 0, pending: 0, paid: 0 });
+
+      el.kpiKm.textContent = `${number(totals.km)} km`;
+      el.kpiAmount.textContent = money(totals.amount);
+      el.kpiPending.textContent = money(totals.pending);
+      el.kpiPaid.textContent = money(totals.paid);
+
+      el.controlRows.innerHTML = rows.map((trip) => {
+        const supervisor = getSupervisor(trip.supervisorId);
+        const canApprove = currentUser.role === "admin" && trip.status === "pending";
+        const canReopen = currentUser.role === "admin" && trip.status === "approved";
+        const canDelete = currentUser.role === "admin" && trip.status !== "paid";
+        return `
+          <tr>
+            <td>${formatDate(trip.date)}</td>
+            <td><strong>${escapeHtml(supervisor?.name || "Supervisor removido")}</strong><br><span class="muted">${escapeHtml(supervisor?.vehicle || "")}</span></td>
+            <td>${number(trip.kmStart)} / ${number(trip.kmEnd)}</td>
+            <td>${number(trip.distanceKm)} km</td>
+            <td class="money">${money(trip.amount)}</td>
+            <td>${tripPhotosHtml(trip)}</td>
+            <td>${statusBadge(trip.status)}</td>
+            <td>
+              <div class="button-row">
+                ${canApprove ? `<button class="primary" type="button" data-approve="${trip.id}">Aprovar</button>` : ""}
+                ${canReopen ? `<button class="secondary" type="button" data-reopen="${trip.id}">Reabrir</button>` : ""}
+                ${canDelete ? `<button class="danger" type="button" data-delete="${trip.id}">Excluir</button>` : ""}
+                ${!canApprove && !canReopen && !canDelete ? `<span class="muted">Somente consulta</span>` : ""}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      el.controlEmpty.classList.toggle("hidden", rows.length > 0);
+    }
+
+    function renderStatement() {
+      const rows = currentStatementTrips();
+      const approvedRows = rows.filter((trip) => trip.status === "approved");
+      const paidRows = rows.filter((trip) => trip.status === "paid");
+      const pendingRows = rows.filter((trip) => trip.status === "pending");
+      const payable = approvedRows.reduce((sum, trip) => sum + trip.amount, 0);
+      const paid = paidRows.reduce((sum, trip) => sum + trip.amount, 0);
+      const km = approvedRows.reduce((sum, trip) => sum + trip.distanceKm, 0);
+
+      el.statementKm.textContent = `${number(km)} km`;
+      el.statementAmount.textContent = money(payable);
+      el.statementPending.textContent = String(pendingRows.length);
+      el.statementPaid.textContent = money(paid);
+
+      el.statementRows.innerHTML = rows.map((trip) => `
+        <tr>
+          <td>${formatDate(trip.date)}</td>
+          <td>${number(trip.kmStart)} / ${number(trip.kmEnd)}</td>
+          <td>${number(trip.distanceKm)} km</td>
+          <td class="money">${money(trip.amount)}</td>
+          <td>${statusBadge(trip.status)}</td>
+          <td>${escapeHtml(trip.notes || "")}</td>
+        </tr>
+      `).join("");
+
+      el.statementEmpty.classList.toggle("hidden", rows.length > 0);
+      el.approveMonthBtn.classList.toggle("hidden", currentUser.role !== "admin");
+      el.financeActions.classList.toggle("hidden", currentUser.role !== "financeiro");
+      el.markMonthPaidBtn.disabled = approvedRows.length === 0;
+      updateStatementExportLink(rows);
+    }
+
+    function renderSupervisors() {
+      el.supervisorList.innerHTML = state.supervisors
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((supervisor) => {
+          const user = state.users.find((item) => item.supervisorId === supervisor.id);
+          return `
+            <div class="person">
+              <div>
+                <strong>${escapeHtml(supervisor.name)}</strong>
+                <span>${escapeHtml(supervisor.vehicle || "Sem veiculo informado")} - usuario: ${escapeHtml(user?.username || "sem usuario")}</span>
+              </div>
+              <button class="danger" type="button" data-remove-supervisor="${supervisor.id}">Remover</button>
+            </div>
+          `;
+        }).join("");
+
+      el.supervisorEmpty.classList.toggle("hidden", state.supervisors.length > 0);
+    }
+
+    function renderAll() {
+      if (!currentUser) return;
+      renderSupervisorOptions();
+      renderRecent();
+      renderControl();
+      renderStatement();
+      renderSupervisors();
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const kmStart = Number(el.kmStart.value);
+      const kmEnd = Number(el.kmEnd.value);
+      const rate = Number(el.rate.value || state.settings.defaultRate);
+      const distance = kmEnd - kmStart;
+
+      if (!el.kmStart.value || !el.kmEnd.value) {
+        el.calcPreview.textContent = `Valor fixado pelo admin: ${money(rate)} por km.`;
+        return;
+      }
+
+      if (distance < 0) {
+        el.calcPreview.textContent = "O km final precisa ser maior ou igual ao km inicial.";
+        return;
+      }
+
+      el.calcPreview.textContent = `${number(distance)} km x ${money(rate)} = ${money(distance * rate)}`;
+    }
+
+    async function imageToDataUrl(file) {
+      const maxSize = 1280;
+      const dataUrl = await readFile(file);
+      const img = await loadImage(dataUrl);
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/jpeg", 0.78);
+    }
+
+    async function saveImage(file, path) {
+      if (!firebaseReady) {
+        throw new Error("Firebase nao conectado para upload de imagem.");
+      }
+      const dataUrl = await imageToDataUrl(file);
+      const ref = storage.ref(path);
+      await ref.putString(dataUrl, "data_url");
+      return { url: await ref.getDownloadURL(), path };
+    }
+
+    async function removeStorageFile(path) {
+      if (!firebaseReady || !path) return;
+      try {
+        await storage.ref(path).delete();
+      } catch (error) {
+        console.warn("Nao foi possivel remover arquivo do Storage", path, error);
+      }
+    }
+
+    function readFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }
+
+    function download(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function rowsToCsv(rows) {
+      const header = ["Data", "Supervisor", "Veiculo", "Km inicial", "Km final", "Km rodado", "Valor por km", "Valor total", "Status", "Observacoes"];
+      const csvRows = rows.map((trip) => {
+        const supervisor = getSupervisor(trip.supervisorId);
+        return [
+          formatDate(trip.date),
+          supervisor?.name || "Supervisor removido",
+          supervisor?.vehicle || "",
+          trip.kmStart,
+          trip.kmEnd,
+          trip.distanceKm,
+          String(trip.rate).replace(".", ","),
+          String(trip.amount).replace(".", ","),
+          trip.status,
+          trip.notes
+        ].map(csvEscape).join(";");
+      });
+      return "\ufeff" + [header.map(csvEscape).join(";"), ...csvRows].join("\n");
+    }
+
+    function updateStatementExportLink(rows) {
+      const supervisor = getSupervisor(el.statementSupervisor.value);
+      const month = el.statementMonth.value;
+      const filename = `extrato-${safeFilename(supervisor?.name || "supervisor")}-${safeFilename(month)}.html`;
+      const html = statementToHtml(rows, supervisor, month);
+      if (statementBlobUrl) URL.revokeObjectURL(statementBlobUrl);
+      statementBlobUrl = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+      el.exportStatementBtn.href = statementBlobUrl;
+      el.exportStatementBtn.download = filename;
+      el.exportStatementBtn.setAttribute("aria-disabled", rows.length === 0 ? "true" : "false");
+      el.openStatementBtn.href = statementBlobUrl;
+      el.openStatementBtn.setAttribute("aria-disabled", rows.length === 0 ? "true" : "false");
+    }
+
+    function statementToHtml(rows, supervisor, month) {
+      const approvedRows = rows.filter((trip) => trip.status === "approved");
+      const paidRows = rows.filter((trip) => trip.status === "paid");
+      const totalKm = approvedRows.reduce((sum, trip) => sum + trip.distanceKm, 0);
+      const totalAmount = approvedRows.reduce((sum, trip) => sum + trip.amount, 0);
+      const paidAmount = paidRows.reduce((sum, trip) => sum + trip.amount, 0);
+      const logoSrc = state.settings.logoUrl || state.settings.logoData;
+      const logo = logoSrc ? `<img class="logo" src="${logoSrc}" alt="Logo">` : "";
+      const bodyRows = rows.map((trip) => `
+        <tr>
+          <td>${formatDate(trip.date)}</td>
+          <td>${number(trip.kmStart)} / ${number(trip.kmEnd)}</td>
+          <td>${number(trip.distanceKm)} km</td>
+          <td>${money(trip.rate)}</td>
+          <td>${money(trip.amount)}</td>
+          <td>${trip.status === "paid" ? "Pago" : trip.status === "approved" ? "Aprovado" : "Aguardando aprovacao"}</td>
+          <td>${escapeHtml(trip.notes || "")}</td>
+        </tr>
+      `).join("");
+
+      return `<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Extrato ${escapeHtml(supervisor?.name || "Supervisor")} - ${monthLabel(month)}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #182320; margin: 32px; }
+    header { display: flex; align-items: center; gap: 18px; border-bottom: 2px solid #126b5f; padding-bottom: 18px; margin-bottom: 22px; }
+    .logo { width: 110px; height: 82px; object-fit: contain; border: 1px solid #d9e4e0; border-radius: 8px; padding: 6px; }
+    h1 { margin: 0; font-size: 24px; }
+    p { margin: 4px 0; color: #566560; }
+    .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 22px 0; }
+    .box { border: 1px solid #d9e4e0; border-radius: 8px; padding: 12px; }
+    .box strong { display: block; font-size: 20px; margin-bottom: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { border-bottom: 1px solid #d9e4e0; padding: 10px; text-align: left; font-size: 13px; }
+    th { background: #f3f6f5; text-transform: uppercase; font-size: 11px; }
+    footer { margin-top: 28px; color: #566560; font-size: 12px; }
+    @media print { body { margin: 18px; } }
+  </style>
+</head>
+<body>
+  <header>
+    ${logo}
+    <div>
+      <h1>${escapeHtml(state.settings.companyName || "Controle de Combustivel")}</h1>
+      <p>Extrato mensal de combustivel - ${monthLabel(month)}</p>
+      <p>Supervisor: ${escapeHtml(supervisor?.name || "Supervisor removido")} ${supervisor?.vehicle ? `- ${escapeHtml(supervisor.vehicle)}` : ""}</p>
+    </div>
+  </header>
+  <section class="summary">
+    <div class="box"><strong>${number(totalKm)} km</strong><span>Km aprovados a pagar</span></div>
+    <div class="box"><strong>${money(totalAmount)}</strong><span>Valor aprovado para pagamento</span></div>
+    <div class="box"><strong>${money(paidAmount)}</strong><span>Ja pago no mes</span></div>
+  </section>
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Km inicial/final</th>
+        <th>Rodado</th>
+        <th>Valor por km</th>
+        <th>Total</th>
+        <th>Status</th>
+        <th>Observacoes</th>
+      </tr>
+    </thead>
+    <tbody>${bodyRows || `<tr><td colspan="7">Nenhum registro encontrado.</td></tr>`}</tbody>
+  </table>
+  <footer>Gerado em ${new Date().toLocaleString("pt-BR")}.</footer>
+</body>
+</html>`;
+    }
+
+    el.loginForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!firebaseReady) {
+        alert("Aguarde a conexao com Firebase. O login local foi desativado para evitar perda de informacoes.");
+        return;
+      }
+      const username = el.loginUser.value.trim();
+      const password = el.loginPass.value;
+      const user = state.users.find((item) => item.username === username && item.password === password);
+      if (!user) {
+        alert("Usuario ou senha invalidos.");
+        return;
+      }
+      el.loginForm.reset();
+      setSession(user);
+    });
+
+    el.logoutBtn.addEventListener("click", () => setSession(null));
+
+    [el.kmStart, el.kmEnd].forEach((input) => input.addEventListener("input", updatePreview));
+
+    el.tripForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (currentUser.role !== "supervisor") {
+        alert("Apenas supervisores fazem registros diarios.");
+        return;
+      }
+
+      const kmStart = Number(el.kmStart.value);
+      const kmEnd = Number(el.kmEnd.value);
+      const rate = Number(state.settings.defaultRate);
+      const distanceKm = kmEnd - kmStart;
+
+      if (distanceKm < 0) {
+        alert("O km final precisa ser maior ou igual ao km inicial.");
+        return;
+      }
+
+      const submit = el.tripForm.querySelector("button[type='submit']");
+      submit.disabled = true;
+      submit.textContent = "Salvando...";
+
+      try {
+        const tripId = crypto.randomUUID();
+        const [photoStart, photoEnd] = await Promise.all([
+          saveImage(el.photoStart.files[0], `trips/${currentUser.supervisorId}/${tripId}/inicio.jpg`),
+          saveImage(el.photoEnd.files[0], `trips/${currentUser.supervisorId}/${tripId}/fim.jpg`)
+        ]);
+
+        state.trips.push({
+          id: tripId,
+          supervisorId: currentUser.supervisorId,
+          date: el.tripDate.value,
+          rate,
+          kmStart,
+          kmEnd,
+          distanceKm,
+          amount: Number((distanceKm * rate).toFixed(2)),
+          photoStart: "",
+          photoEnd: "",
+          photoStartUrl: photoStart.url,
+          photoEndUrl: photoEnd.url,
+          photoStartPath: photoStart.path,
+          photoEndPath: photoEnd.path,
+          notes: el.notes.value.trim(),
+          status: "pending",
+          createdAt: new Date().toISOString()
+        });
+
+        saveState();
+        el.tripForm.reset();
+        el.tripDate.valueAsDate = new Date();
+        el.rate.value = Number(state.settings.defaultRate).toFixed(2);
+        renderAll();
+        alert("Registro salvo e enviado para aprovacao do admin.");
+      } finally {
+        submit.disabled = false;
+        submit.textContent = "Salvar registro";
+      }
+    });
+
+    el.clearFormBtn.addEventListener("click", () => {
+      el.tripForm.reset();
+      el.tripDate.valueAsDate = new Date();
+      el.rate.value = Number(state.settings.defaultRate).toFixed(2);
+      updatePreview();
+    });
+
+    [el.filterSupervisor, el.filterStatus, el.filterMonth].forEach((input) => {
+      input.addEventListener("input", renderControl);
+    });
+
+    [el.statementSupervisor, el.statementMonth].forEach((input) => {
+      input.addEventListener("input", renderStatement);
+    });
+
+    el.controlRows.addEventListener("click", (event) => {
+      const approveId = event.target.dataset.approve;
+      const reopenId = event.target.dataset.reopen;
+      const deleteId = event.target.dataset.delete;
+      const photoId = event.target.dataset.photo;
+
+      if (approveId) {
+        const trip = state.trips.find((item) => item.id === approveId);
+        trip.status = "approved";
+        trip.approvedBy = currentUser.id;
+        trip.approvedAt = new Date().toISOString();
+        saveState();
+        renderAll();
+      }
+
+      if (reopenId) {
+        const trip = state.trips.find((item) => item.id === reopenId);
+        trip.status = "pending";
+        delete trip.approvedBy;
+        delete trip.approvedAt;
+        saveState();
+        renderAll();
+      }
+
+      if (deleteId) {
+        if (!confirm("Deseja excluir este registro?")) return;
+        state.trips = state.trips.filter((item) => item.id !== deleteId);
+        saveState();
+        renderAll();
+      }
+
+      if (photoId) {
+        const trip = state.trips.find((item) => item.id === photoId);
+        const start = trip?.photoStartUrl || trip?.photoStart;
+        const end = trip?.photoEndUrl || trip?.photoEnd;
+        if (!start || !end) {
+          alert("As fotos deste registro ja foram removidas apos o pagamento.");
+          return;
+        }
+        const isStart = event.target.dataset.kind === "start";
+        el.photoPreview.src = isStart ? start : end;
+        el.photoTitle.textContent = isStart ? "Foto inicial" : "Foto final";
+        el.photoDialog.showModal();
+      }
+    });
+
+    el.approveMonthBtn.addEventListener("click", () => {
+      const rows = currentStatementTrips().filter((trip) => trip.status === "pending");
+      if (rows.length === 0) {
+        alert("Nao ha registros pendentes neste mes.");
+        return;
+      }
+      rows.forEach((trip) => {
+        trip.status = "approved";
+        trip.approvedBy = currentUser.id;
+        trip.approvedAt = new Date().toISOString();
+      });
+      saveState();
+      renderAll();
+      alert("Mes aprovado para o financeiro.");
+    });
+
+    el.markMonthPaidBtn.addEventListener("click", async () => {
+      const rows = currentStatementTrips().filter((trip) => trip.status === "approved");
+      if (rows.length === 0) {
+        alert("Nao ha valores aprovados para pagar.");
+        return;
+      }
+
+      for (const trip of rows) {
+        await Promise.all([
+          removeStorageFile(trip.photoStartPath),
+          removeStorageFile(trip.photoEndPath)
+        ]);
+        trip.status = "paid";
+        trip.paidBy = currentUser.id;
+        trip.paidAt = new Date().toISOString();
+        delete trip.photoStart;
+        delete trip.photoEnd;
+        delete trip.photoStartUrl;
+        delete trip.photoEndUrl;
+        delete trip.photoStartPath;
+        delete trip.photoEndPath;
+        trip.photosRemovedAt = new Date().toISOString();
+      }
+      saveState();
+      renderAll();
+      alert("Extrato marcado como pago. As fotos deste mes foram removidas para reduzir o armazenamento.");
+    });
+
+    el.exportStatementBtn.addEventListener("click", (event) => {
+      if (currentStatementTrips().length > 0) return;
+      event.preventDefault();
+      alert("Nao ha registros para exportar neste extrato.");
+    });
+
+    el.openStatementBtn.addEventListener("click", (event) => {
+      if (currentStatementTrips().length > 0) return;
+      event.preventDefault();
+      alert("Nao ha registros para abrir neste extrato.");
+    });
+
+    el.supervisorForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const username = el.newUser.value.trim();
+      if (state.users.some((user) => user.username === username)) {
+        alert("Ja existe usuario com este login.");
+        return;
+      }
+
+      const supervisorId = crypto.randomUUID();
+      state.supervisors.push({
+        id: supervisorId,
+        name: el.supervisorName.value.trim(),
+        vehicle: el.vehiclePlate.value.trim()
+      });
+      state.users.push({
+        id: crypto.randomUUID(),
+        username,
+        password: el.newPass.value,
+        role: "supervisor",
+        name: el.supervisorName.value.trim(),
+        supervisorId
+      });
+      saveState();
+      el.supervisorForm.reset();
+      renderAll();
+    });
+
+    el.supervisorList.addEventListener("click", (event) => {
+      const id = event.target.dataset.removeSupervisor;
+      if (!id) return;
+      const hasTrips = state.trips.some((trip) => trip.supervisorId === id);
+      if (hasTrips) {
+        alert("Este supervisor possui registros. Para preservar o historico, ele nao pode ser removido.");
+        return;
+      }
+      state.supervisors = state.supervisors.filter((item) => item.id !== id);
+      state.users = state.users.filter((item) => item.supervisorId !== id);
+      saveState();
+      renderAll();
+    });
+
+    el.settingsForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      state.settings.defaultRate = Number(el.defaultRate.value);
+      state.settings.companyName = el.companyName.value.trim();
+      saveState();
+      el.rate.value = Number(state.settings.defaultRate).toFixed(2);
+      renderAll();
+      alert("Ajustes salvos.");
+    });
+
+    el.companyLogo.addEventListener("change", async () => {
+      const file = el.companyLogo.files[0];
+      if (!file) return;
+      if (state.settings.logoPath) await removeStorageFile(state.settings.logoPath);
+      const logo = await saveImage(file, "settings/logo.jpg");
+      state.settings.logoData = "";
+      state.settings.logoUrl = logo.url;
+      state.settings.logoPath = logo.path;
+      saveState();
+      renderLogo();
+      el.companyLogo.value = "";
+    });
+
+    el.removeLogoBtn.addEventListener("click", async () => {
+      await removeStorageFile(state.settings.logoPath);
+      state.settings.logoData = "";
+      delete state.settings.logoUrl;
+      delete state.settings.logoPath;
+      saveState();
+      renderLogo();
+    });
+
+    el.closePhotoBtn.addEventListener("click", () => el.photoDialog.close());
+
+    el.exportCsvBtn.addEventListener("click", () => {
+      download(`controle-combustivel-${new Date().toISOString().slice(0, 10)}.csv`, rowsToCsv(filteredTrips()), "text/csv;charset=utf-8");
+    });
+
+    el.backupBtn.addEventListener("click", () => {
+      download(`backup-controle-combustivel-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(state, null, 2), "application/json");
+    });
+
+    initFirebase().finally(renderAppShell);
+  </script>
+</body>
+</html>
