@@ -254,6 +254,14 @@
     .money { font-weight: 850; color: var(--brand-dark); white-space: nowrap; }
     .photos { display: flex; gap: 8px; flex-wrap: wrap; }
     .thumb { width: 58px; height: 58px; border-radius: 6px; object-fit: cover; border: 1px solid var(--line); background: #edf3f1; cursor: pointer; }
+    .photo-meta {
+      display: grid;
+      gap: 3px;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.25;
+    }
     .photo-removed {
       display: inline-flex;
       align-items: center;
@@ -927,6 +935,19 @@
       return `${day}/${month}/${year}`;
     }
 
+    function formatDateTime(value) {
+      if (!value) return "nao registrado";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "nao registrado";
+      return date.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
     function monthLabel(value) {
       if (!value) return "";
       const [year, month] = value.split("-");
@@ -1000,6 +1021,8 @@
     function tripPhotosHtml(trip) {
       const start = trip.photoStartUrl || trip.photoStart;
       const end = trip.photoEndUrl || trip.photoEnd;
+      const startUploadedAt = trip.photoStartUploadedAt || trip.createdAt;
+      const endUploadedAt = trip.photoEndUploadedAt || trip.createdAt;
       if (!start || !end) {
         return `<span class="photo-removed">Fotos removidas apos pagamento</span>`;
       }
@@ -1007,6 +1030,10 @@
         <div class="photos">
           <img class="thumb" src="${start}" alt="Foto inicial" data-photo="${trip.id}" data-kind="start">
           <img class="thumb" src="${end}" alt="Foto final" data-photo="${trip.id}" data-kind="end">
+        </div>
+        <div class="photo-meta">
+          <span>Inicial enviada: ${formatDateTime(startUploadedAt)}</span>
+          <span>Final enviada: ${formatDateTime(endUploadedAt)}</span>
         </div>
       `;
     }
@@ -1455,10 +1482,12 @@
 
       try {
         const tripId = crypto.randomUUID();
+        const uploadStartedAt = new Date().toISOString();
         const [photoStart, photoEnd] = await Promise.all([
           saveImage(el.photoStart.files[0], `trips/${currentUser.supervisorId}/${tripId}/inicio.jpg`),
           saveImage(el.photoEnd.files[0], `trips/${currentUser.supervisorId}/${tripId}/fim.jpg`)
         ]);
+        const uploadFinishedAt = new Date().toISOString();
 
         state.trips.push({
           id: tripId,
@@ -1475,9 +1504,11 @@
           photoEndUrl: photoEnd.url,
           photoStartPath: photoStart.path,
           photoEndPath: photoEnd.path,
+          photoStartUploadedAt: uploadStartedAt,
+          photoEndUploadedAt: uploadFinishedAt,
           notes: el.notes.value.trim(),
           status: "pending",
-          createdAt: new Date().toISOString()
+          createdAt: uploadFinishedAt
         });
 
         saveState();
