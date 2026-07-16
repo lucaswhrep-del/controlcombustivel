@@ -418,21 +418,21 @@
                   <label for="rate">Valor por km</label>
                   <input id="rate" type="number" min="0" step="0.01" readonly required>
                 </div>
-                <div class="field">
+                <div class="field" id="kmStartField">
                   <label for="kmStart">Km inicial</label>
                   <input id="kmStart" type="number" min="0" step="1" required>
                 </div>
-                <div class="field">
+                <div class="field" id="kmEndField">
                   <label for="kmEnd">Km final</label>
-                  <input id="kmEnd" type="number" min="0" step="1" required>
+                  <input id="kmEnd" type="number" min="0" step="1">
                 </div>
-                <div class="field">
+                <div class="field" id="photoStartField">
                   <label for="photoStart">Foto inicial</label>
-                  <input id="photoStart" type="file" accept="image/*" capture="environment" required>
+                  <input id="photoStart" type="file" accept="image/*" required>
                 </div>
-                <div class="field">
+                <div class="field" id="photoEndField">
                   <label for="photoEnd">Foto final</label>
-                  <input id="photoEnd" type="file" accept="image/*" capture="environment" required>
+                  <input id="photoEnd" type="file" accept="image/*">
                 </div>
                 <div class="field full">
                   <label for="notes">Observacoes</label>
@@ -441,7 +441,7 @@
               </div>
               <div class="notice" id="calcPreview">Preencha os campos para calcular.</div>
               <div class="button-row">
-                <button class="primary" type="submit">Salvar registro</button>
+                <button class="primary" id="tripSubmitBtn" type="submit">Iniciar dia</button>
                 <button class="secondary" id="clearFormBtn" type="button">Limpar</button>
               </div>
             </form>
@@ -497,6 +497,7 @@
               <label for="filterStatus">Status</label>
               <select id="filterStatus">
                 <option value="all">Todos</option>
+                <option value="in_progress">Em andamento</option>
                 <option value="pending">Aguardando aprovacao</option>
                 <option value="approved">Aprovado</option>
                 <option value="paid">Pago</option>
@@ -749,10 +750,15 @@
       supervisorSelect: document.querySelector("#supervisorSelect"),
       tripDate: document.querySelector("#tripDate"),
       rate: document.querySelector("#rate"),
+      kmStartField: document.querySelector("#kmStartField"),
+      kmEndField: document.querySelector("#kmEndField"),
       kmStart: document.querySelector("#kmStart"),
       kmEnd: document.querySelector("#kmEnd"),
+      photoStartField: document.querySelector("#photoStartField"),
+      photoEndField: document.querySelector("#photoEndField"),
       photoStart: document.querySelector("#photoStart"),
       photoEnd: document.querySelector("#photoEnd"),
+      tripSubmitBtn: document.querySelector("#tripSubmitBtn"),
       notes: document.querySelector("#notes"),
       calcPreview: document.querySelector("#calcPreview"),
       recentRows: document.querySelector("#recentRows"),
@@ -1009,8 +1015,51 @@
         .sort((a, b) => a.date.localeCompare(b.date));
     }
 
+    function openTripForSelectedDate() {
+      if (currentUser?.role !== "supervisor") return null;
+      return state.trips.find((trip) => (
+        trip.supervisorId === currentUser.supervisorId &&
+        trip.date === el.tripDate.value &&
+        trip.status === "in_progress"
+      )) || null;
+    }
+
+    function updateTripFormMode() {
+      if (!currentUser || currentUser.role !== "supervisor") return;
+      const openTrip = openTripForSelectedDate();
+      const isFinishing = Boolean(openTrip);
+      const wasFinishing = el.kmStart.disabled;
+
+      el.kmStart.required = !isFinishing;
+      el.photoStart.required = !isFinishing;
+      el.kmEnd.required = isFinishing;
+      el.photoEnd.required = isFinishing;
+
+      el.kmStart.disabled = isFinishing;
+      el.photoStart.disabled = isFinishing;
+      el.kmEnd.disabled = !isFinishing;
+      el.photoEnd.disabled = !isFinishing;
+
+      if (isFinishing) {
+        el.kmStart.value = openTrip.kmStart;
+        el.kmEnd.value = "";
+        el.calcPreview.textContent = `Dia iniciado as ${formatDateTime(openTrip.photoStartUploadedAt || openTrip.createdAt)}. Informe o km final e envie a foto final.`;
+        el.tripSubmitBtn.textContent = "Finalizar dia";
+      } else {
+        if (wasFinishing) {
+          el.kmStart.value = "";
+          el.kmEnd.value = "";
+          el.photoStart.value = "";
+          el.photoEnd.value = "";
+        }
+        el.tripSubmitBtn.textContent = "Iniciar dia";
+        updatePreview();
+      }
+    }
+
     function statusBadge(status) {
       const labels = {
+        in_progress: "Em andamento",
         pending: "Aguardando aprovacao",
         approved: "Aprovado",
         paid: "Pago"
@@ -1023,17 +1072,17 @@
       const end = trip.photoEndUrl || trip.photoEnd;
       const startUploadedAt = trip.photoStartUploadedAt || trip.createdAt;
       const endUploadedAt = trip.photoEndUploadedAt || trip.createdAt;
-      if (!start || !end) {
+      if (!start && !end) {
         return `<span class="photo-removed">Fotos removidas apos pagamento</span>`;
       }
       return `
         <div class="photos">
-          <img class="thumb" src="${start}" alt="Foto inicial" data-photo="${trip.id}" data-kind="start">
-          <img class="thumb" src="${end}" alt="Foto final" data-photo="${trip.id}" data-kind="end">
+          ${start ? `<img class="thumb" src="${start}" alt="Foto inicial" data-photo="${trip.id}" data-kind="start">` : ""}
+          ${end ? `<img class="thumb" src="${end}" alt="Foto final" data-photo="${trip.id}" data-kind="end">` : ""}
         </div>
         <div class="photo-meta">
-          <span>Inicial enviada: ${formatDateTime(startUploadedAt)}</span>
-          <span>Final enviada: ${formatDateTime(endUploadedAt)}</span>
+          ${start ? `<span>Inicial enviada: ${formatDateTime(startUploadedAt)}</span>` : ""}
+          ${end ? `<span>Final enviada: ${formatDateTime(endUploadedAt)}</span>` : `<span>Final ainda nao enviada</span>`}
         </div>
       `;
     }
@@ -1167,7 +1216,7 @@
           <tr>
             <td>${formatDate(trip.date)}</td>
             <td><strong>${escapeHtml(supervisor?.name || "Supervisor removido")}</strong><br><span class="muted">${escapeHtml(supervisor?.vehicle || "")}</span></td>
-            <td>${number(trip.kmStart)} / ${number(trip.kmEnd)}</td>
+            <td>${number(trip.kmStart)} / ${trip.kmEnd == null ? "-" : number(trip.kmEnd)}</td>
             <td>${number(trip.distanceKm)} km</td>
             <td class="money">${money(trip.amount)}</td>
             <td>${tripPhotosHtml(trip)}</td>
@@ -1204,7 +1253,7 @@
       el.statementRows.innerHTML = rows.map((trip) => `
         <tr>
           <td>${formatDate(trip.date)}</td>
-          <td>${number(trip.kmStart)} / ${number(trip.kmEnd)}</td>
+          <td>${number(trip.kmStart)} / ${trip.kmEnd == null ? "-" : number(trip.kmEnd)}</td>
           <td>${number(trip.distanceKm)} km</td>
           <td class="money">${money(trip.amount)}</td>
           <td>${statusBadge(trip.status)}</td>
@@ -1246,13 +1295,25 @@
       renderStatement();
       renderSupervisors();
       updatePreview();
+      updateTripFormMode();
     }
 
     function updatePreview() {
+      const openTrip = openTripForSelectedDate();
       const kmStart = Number(el.kmStart.value);
       const kmEnd = Number(el.kmEnd.value);
       const rate = Number(el.rate.value || state.settings.defaultRate);
       const distance = kmEnd - kmStart;
+
+      if (openTrip && !el.kmEnd.value) {
+        el.calcPreview.textContent = `Dia iniciado as ${formatDateTime(openTrip.photoStartUploadedAt || openTrip.createdAt)}. Informe o km final e envie a foto final.`;
+        return;
+      }
+
+      if (!openTrip && !el.kmStart.value) {
+        el.calcPreview.textContent = `Informe o km inicial e envie a foto inicial. Valor fixado pelo admin: ${money(rate)} por km.`;
+        return;
+      }
 
       if (!el.kmStart.value || !el.kmEnd.value) {
         el.calcPreview.textContent = `Valor fixado pelo admin: ${money(rate)} por km.`;
@@ -1339,7 +1400,7 @@
           supervisor?.name || "Supervisor removido",
           supervisor?.vehicle || "",
           trip.kmStart,
-          trip.kmEnd,
+          trip.kmEnd ?? "",
           trip.distanceKm,
           String(trip.rate).replace(".", ","),
           String(trip.amount).replace(".", ","),
@@ -1375,7 +1436,7 @@
       const bodyRows = rows.map((trip) => `
         <tr>
           <td>${formatDate(trip.date)}</td>
-          <td>${number(trip.kmStart)} / ${number(trip.kmEnd)}</td>
+          <td>${number(trip.kmStart)} / ${trip.kmEnd == null ? "-" : number(trip.kmEnd)}</td>
           <td>${number(trip.distanceKm)} km</td>
           <td>${money(trip.rate)}</td>
           <td>${money(trip.amount)}</td>
@@ -1458,6 +1519,7 @@
     el.logoutBtn.addEventListener("click", () => setSession(null));
 
     [el.kmStart, el.kmEnd].forEach((input) => input.addEventListener("input", updatePreview));
+    el.tripDate.addEventListener("input", updateTripFormMode);
 
     el.tripForm.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -1466,60 +1528,83 @@
         return;
       }
 
-      const kmStart = Number(el.kmStart.value);
-      const kmEnd = Number(el.kmEnd.value);
       const rate = Number(state.settings.defaultRate);
-      const distanceKm = kmEnd - kmStart;
-
-      if (distanceKm < 0) {
-        alert("O km final precisa ser maior ou igual ao km inicial.");
-        return;
-      }
+      const openTrip = openTripForSelectedDate();
 
       const submit = el.tripForm.querySelector("button[type='submit']");
       submit.disabled = true;
       submit.textContent = "Salvando...";
 
       try {
-        const tripId = crypto.randomUUID();
+        if (!openTrip) {
+          const tripId = crypto.randomUUID();
+          const kmStart = Number(el.kmStart.value);
+          const uploadStartedAt = new Date().toISOString();
+          const photoStart = await saveImage(el.photoStart.files[0], `trips/${currentUser.supervisorId}/${tripId}/inicio.jpg`);
+          const uploadFinishedAt = new Date().toISOString();
+
+          state.trips.push({
+            id: tripId,
+            supervisorId: currentUser.supervisorId,
+            date: el.tripDate.value,
+            rate,
+            kmStart,
+            kmEnd: null,
+            distanceKm: 0,
+            amount: 0,
+            photoStart: "",
+            photoEnd: "",
+            photoStartUrl: photoStart.url,
+            photoEndUrl: "",
+            photoStartPath: photoStart.path,
+            photoEndPath: "",
+            photoStartUploadedAt: uploadFinishedAt,
+            notes: el.notes.value.trim(),
+            status: "in_progress",
+            createdAt: uploadStartedAt,
+            updatedAt: uploadFinishedAt
+          });
+
+          saveState();
+          el.tripForm.reset();
+          el.tripDate.valueAsDate = new Date();
+          el.rate.value = Number(state.settings.defaultRate).toFixed(2);
+          renderAll();
+          alert("Inicio do dia salvo. A tarde, volte nesta mesma data para finalizar com km final e foto final.");
+          return;
+        }
+
+        const kmEnd = Number(el.kmEnd.value);
+        const distanceKm = kmEnd - Number(openTrip.kmStart);
+
+        if (distanceKm < 0) {
+          alert("O km final precisa ser maior ou igual ao km inicial.");
+          return;
+        }
+
         const uploadStartedAt = new Date().toISOString();
-        const [photoStart, photoEnd] = await Promise.all([
-          saveImage(el.photoStart.files[0], `trips/${currentUser.supervisorId}/${tripId}/inicio.jpg`),
-          saveImage(el.photoEnd.files[0], `trips/${currentUser.supervisorId}/${tripId}/fim.jpg`)
-        ]);
+        const photoEnd = await saveImage(el.photoEnd.files[0], `trips/${currentUser.supervisorId}/${openTrip.id}/fim.jpg`);
         const uploadFinishedAt = new Date().toISOString();
 
-        state.trips.push({
-          id: tripId,
-          supervisorId: currentUser.supervisorId,
-          date: el.tripDate.value,
-          rate,
-          kmStart,
-          kmEnd,
-          distanceKm,
-          amount: Number((distanceKm * rate).toFixed(2)),
-          photoStart: "",
-          photoEnd: "",
-          photoStartUrl: photoStart.url,
-          photoEndUrl: photoEnd.url,
-          photoStartPath: photoStart.path,
-          photoEndPath: photoEnd.path,
-          photoStartUploadedAt: uploadStartedAt,
-          photoEndUploadedAt: uploadFinishedAt,
-          notes: el.notes.value.trim(),
-          status: "pending",
-          createdAt: uploadFinishedAt
-        });
+        openTrip.kmEnd = kmEnd;
+        openTrip.distanceKm = distanceKm;
+        openTrip.amount = Number((distanceKm * Number(openTrip.rate || rate)).toFixed(2));
+        openTrip.photoEndUrl = photoEnd.url;
+        openTrip.photoEndPath = photoEnd.path;
+        openTrip.photoEndUploadedAt = uploadFinishedAt;
+        openTrip.notes = el.notes.value.trim() || openTrip.notes || "";
+        openTrip.status = "pending";
+        openTrip.updatedAt = uploadFinishedAt;
 
         saveState();
         el.tripForm.reset();
         el.tripDate.valueAsDate = new Date();
         el.rate.value = Number(state.settings.defaultRate).toFixed(2);
         renderAll();
-        alert("Registro salvo e enviado para aprovacao do admin.");
+        alert("Dia finalizado e enviado para aprovacao do admin.");
       } finally {
         submit.disabled = false;
-        submit.textContent = "Salvar registro";
+        updateTripFormMode();
       }
     });
 
@@ -1527,7 +1612,7 @@
       el.tripForm.reset();
       el.tripDate.valueAsDate = new Date();
       el.rate.value = Number(state.settings.defaultRate).toFixed(2);
-      updatePreview();
+      updateTripFormMode();
     });
 
     [el.filterSupervisor, el.filterStatus, el.filterMonth].forEach((input) => {
@@ -1573,12 +1658,13 @@
         const trip = state.trips.find((item) => item.id === photoId);
         const start = trip?.photoStartUrl || trip?.photoStart;
         const end = trip?.photoEndUrl || trip?.photoEnd;
-        if (!start || !end) {
-          alert("As fotos deste registro ja foram removidas apos o pagamento.");
+        const isStart = event.target.dataset.kind === "start";
+        const targetPhoto = isStart ? start : end;
+        if (!targetPhoto) {
+          alert(isStart ? "A foto inicial nao esta disponivel." : "A foto final ainda nao foi enviada.");
           return;
         }
-        const isStart = event.target.dataset.kind === "start";
-        el.photoPreview.src = isStart ? start : end;
+        el.photoPreview.src = targetPhoto;
         el.photoTitle.textContent = isStart ? "Foto inicial" : "Foto final";
         el.photoDialog.showModal();
       }
